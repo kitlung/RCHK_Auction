@@ -1,0 +1,38 @@
+version: '3'
+services:
+  rethinkdb:
+    image: rethinkdb:latest
+    container_name: rchk_auction_database
+    volumes:
+      - ./database:/data
+  backend:
+    build: ./backend
+    container_name: rchk_auction_backend
+    restart: always
+    volumes:
+      - ./backend:/rchk_auction/backend
+    ports:
+      - '7082:7082'
+  frontend:
+    build: ./frontend
+    container_name: rchk_auction_frontend
+    volumes:
+      - ./frontend:/rchk_auction/frontend
+    depends_on:
+      - backend
+    links:
+      - backend
+  nginx:
+    build: ./nginx
+    container_name: rchk_auction_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/rchk-auction.conf:/etc/nginx/conf.d/rchk-auction.conf
+      - ./nginx/.htpasswd:/etc/nginx/conf.d/.htpasswd
+      - ./frontend:/rchk_auction/frontend/
+    ports:
+      - '7000:80'
+    depends_on:
+      - frontend
+      - backend
+      - rethinkdb
